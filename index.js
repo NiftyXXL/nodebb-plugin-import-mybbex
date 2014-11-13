@@ -3,7 +3,7 @@ var async = require('async');
 var mysql = require('mysql');
 var _ = require('underscore');
 var noop = function(){};
-var logPrefix = '[nodebb-plugin-import-vbulletin]';
+var logPrefix = '[nodebb-plugin-import-mybbex]';
 
 (function(Exporter) {
 
@@ -17,7 +17,7 @@ var logPrefix = '[nodebb-plugin-import-vbulletin]';
             user: config.dbuser || config.user || 'user',
             password: config.dbpass || config.pass || config.password || 'password',
             port: config.dbport || config.port || 3306,
-            database: config.dbname || config.name || config.database || 'vb'
+            database: config.dbname || config.name || config.database || 'mybb'
         };
 
         Exporter.config(_config);
@@ -40,11 +40,11 @@ var logPrefix = '[nodebb-plugin-import-vbulletin]';
         }
         var prefix = Exporter.config('prefix');
         var query = 'SELECT '
-            + prefix + 'usergroup.usergroupid as _gid, '
-            + prefix + 'usergroup.title as _title, ' // not sure, just making an assumption
-            + prefix + 'usergroup.pmpermissions as _pmpermissions, ' // not sure, just making an assumption
-            + prefix + 'usergroup.adminpermissions as _adminpermissions ' // not sure, just making an assumption
-            + ' from ' + prefix + 'usergroup ';
+            + prefix + 'usergroups.gid as _gid, '
+            + prefix + 'usergroups.title as _title, ' // not sure, just making an assumption
+            + prefix + 'usergroups.canusepmsas _pmpermissions, ' // not sure, just making an assumption
+            + prefix + 'usergroups.issupermod as _adminpermissions ' // not sure, just making an assumption
+            + ' from ' + prefix + 'usergroups ';
         Exporter.connection.query(query,
             function(err, rows) {
                 if (err) {
@@ -95,20 +95,18 @@ var logPrefix = '[nodebb-plugin-import-vbulletin]';
         var startms = +new Date();
 
         var query = 'SELECT '
-            + prefix + 'user.userid as _uid, '
-            + prefix + 'user.email as _email, '
-            + prefix + 'user.username as _username, '
-            + prefix + 'sigparsed.signatureparsed as _signature, '
-            + prefix + 'user.joindate as _joindate, '
-            + prefix + 'customavatar.filename as _pictureFilename, '
-            + prefix + 'customavatar.filedata as _pictureBlob, '
-            + prefix + 'user.homepage as _website, '
-            + prefix + 'user.reputation as _reputation, '
-            + prefix + 'user.profilevisits as _profileviews, '
-            + prefix + 'user.birthday as _birthday '
-            + 'FROM ' + prefix + 'user '
-            + 'LEFT JOIN ' + prefix + 'sigparsed ON ' + prefix + 'sigparsed.userid=' + prefix + 'user.userid '
-            + 'LEFT JOIN ' + prefix + 'customavatar ON ' + prefix + 'customavatar.userid=' + prefix + 'user.userid '
+            + prefix + 'users.uid as _uid, '
+            + prefix + 'users.email as _email, '
+            + prefix + 'users.username as _username, '
+            + prefix + 'users.signature as _signature, '
+            + prefix + 'users.regdate as _joindate, '
+            + prefix + 'users.avatar as _pictureFilename, '
+            + prefix + '"" as _pictureBlob, '
+            + prefix + 'users.website as _website, '
+            + prefix + 'users.reputation as _reputation, '
+            + prefix + '"0" as _profileviews, '
+            + prefix + 'users.birthday as _birthday '
+            + 'FROM ' + prefix + 'users '
             + (start >= 0 && limit >= 0 ? 'LIMIT ' + start + ',' + limit : '');
 
         if (!Exporter.connection) {
@@ -161,11 +159,11 @@ var logPrefix = '[nodebb-plugin-import-vbulletin]';
         var startms = +new Date();
 
         var query = 'SELECT '
-            + prefix + 'forum.forumid as _cid, '
-            + prefix + 'forum.title as _name, '
-            + prefix + 'forum.description as _description, '
-            + prefix + 'forum.displayorder as _order '
-            + 'FROM ' + prefix + 'forum ' // filter added later
+            + prefix + 'forums.fid as _cid, '
+            + prefix + 'forums.name as _name, '
+            + prefix + 'forums.description as _description, '
+            + prefix + 'forums.displayorder as _order '
+            + 'FROM ' + prefix + 'forums ' // filter added later
             + (start >= 0 && limit >= 0 ? 'LIMIT ' + start + ',' + limit : '');
 
         if (!Exporter.connection) {
@@ -204,20 +202,20 @@ var logPrefix = '[nodebb-plugin-import-vbulletin]';
         var prefix = Exporter.config('prefix');
         var startms = +new Date();
         var query = 'SELECT '
-            + prefix + 'thread.threadid as _tid, '
+            + prefix + 'threads.tid as _tid, '
             + prefix + 'post.userid as _uid, '
-            + prefix + 'thread.forumid as _cid, '
-            + prefix + 'post.title as _title, '
-            + prefix + 'post.pagetext as _content, '
-            + prefix + 'post.username as _guest, '
-            + prefix + 'post.ipaddress as _ip, '
-            + prefix + 'post.dateline as _timestamp, '
-            + prefix + 'thread.views as _viewcount, '
-            + prefix + 'thread.open as _open, '
-            + prefix + 'thread.deletedcount as _deleted, '
-            + prefix + 'thread.sticky as _pinned '
-            + 'FROM ' + prefix + 'thread '
-            + 'JOIN ' + prefix + 'post ON ' + prefix + 'thread.firstpostid=' + prefix + 'post.postid '
+            + prefix + 'thread.fid as _cid, '
+            + prefix + 'posts.subject as _title, '
+            + prefix + 'posts.message as _content, '
+            + prefix + 'posts.username as _guest, '
+            + prefix + 'posts.ipaddress as _ip, '
+            + prefix + 'posts.dateline as _timestamp, '
+            + prefix + 'threads.views as _viewcount, '
+            + prefix + '!threads.closed as _open, '
+            + prefix + 'threads.deletedposts as _deleted, '
+            + prefix + 'threads.sticky as _pinned '
+            + 'FROM ' + prefix + 'threads '
+            + 'JOIN ' + prefix + 'posts ON ' + prefix + 'thread.firstpost=' + prefix + 'posts.pid '
             + (start >= 0 && limit >= 0 ? 'LIMIT ' + start + ',' + limit : '');
 
 
@@ -258,14 +256,14 @@ var logPrefix = '[nodebb-plugin-import-vbulletin]';
         var prefix = Exporter.config('prefix');
         var startms = +new Date();
         var query = 'SELECT '
-            + prefix + 'post.postid as _pid, '
-            + prefix + 'post.threadid as _tid, '
-            + prefix + 'post.userid as _uid, '
-            + prefix + 'post.username as _guest, '
-            + prefix + 'post.ipaddress as _ip, '
-            + prefix + 'post.pagetext as _content, '
-            + prefix + 'post.dateline as _timestamp '
-            + 'FROM ' + prefix + 'post WHERE ' + prefix + 'post.parentid<>0 '
+            + prefix + 'posts.pid as _pid, '
+            + prefix + 'posts.tid as _tid, '
+            + prefix + 'posts.uid as _uid, '
+            + prefix + 'posts.username as _guest, '
+            + prefix + 'posts.ipaddress as _ip, '
+            + prefix + 'posts.message as _content, '
+            + prefix + 'posts.dateline as _timestamp '
+            + 'FROM ' + prefix + 'posts WHERE ' + prefix + 'posts.parentid<>0 '
             + (start >= 0 && limit >= 0 ? 'LIMIT ' + start + ',' + limit : '');
 
         if (!Exporter.connection) {

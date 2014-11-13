@@ -1,19 +1,18 @@
 {
-    "name": "nodebb-plugin-import-vbulletin",
+    "name": "nodebb-plugin-import-mybbex",
     "version": "0.0.5",
-    "description": "A vbulletin to NodeBB data exporter",
+    "description": "A MyBB to NodeBB data exporter",
     "main": "./index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/akhoury/nodebb-plugin-import-vbulletin"
+        "url": "https://github.com/NiftyXXL/nodebb-plugin-import-mybbex"
     },
     "keywords": [
         "nodebb",
-        "vb",
-        "vbulletin",
+        "mybb",
         "plugin",
         "migrate",
         "convert",
@@ -32,7 +31,7 @@
     ],
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/akhoury/nodebb-plugin-import-vbulletin/issues"
+        "url": "https://github.com/NiftyXXL/nodebb-plugin-import-mybbex/issues"
     },
     "dependencies": {
         "underscore": "~1.6.0",
