@@ -162,7 +162,7 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
             + prefix + 'forums.fid as _cid, '
             + prefix + 'forums.name as _name, '
             + prefix + 'forums.description as _description, '
-            + prefix + 'forums.displayorder as _order '
+            + prefix + 'forums.disporder as _order '
             + 'FROM ' + prefix + 'forums ' // filter added later
             + (start >= 0 && limit >= 0 ? 'LIMIT ' + start + ',' + limit : '');
 
