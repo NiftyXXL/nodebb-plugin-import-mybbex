@@ -40,7 +40,7 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
         }
         var prefix = Exporter.config('prefix');
         var query = 'SELECT '
-            + prefix + 'usergroups.gid as _gid, '
+            + prefix + 'usergroups.usergroup as _gid, '
             + prefix + 'usergroups.title as _title, ' // not sure, just making an assumption
             + prefix + 'usergroups.canusepms as _pmpermissions, ' // not sure, just making an assumption
             + prefix + 'usergroups.issupermod as _adminpermissions ' // not sure, just making an assumption
