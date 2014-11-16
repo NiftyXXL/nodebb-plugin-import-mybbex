@@ -101,10 +101,8 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
             + prefix + 'users.signature as _signature, '
             + prefix + 'users.regdate as _joindate, '
             + prefix + 'users.avatar as _pictureFilename, '
-            + prefix + '"" as _pictureBlob, '
             + prefix + 'users.website as _website, '
             + prefix + 'users.reputation as _reputation, '
-            + prefix + '"0" as _profileviews, '
             + prefix + 'users.birthday as _birthday '
             + 'FROM ' + prefix + 'users '
             + (start >= 0 && limit >= 0 ? 'LIMIT ' + start + ',' + limit : '');
@@ -203,19 +201,19 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
         var startms = +new Date();
         var query = 'SELECT '
             + prefix + 'threads.tid as _tid, '
-            + prefix + 'post.userid as _uid, '
-            + prefix + 'thread.fid as _cid, '
+            + prefix + 'posts.uid as _uid, '
+            + prefix + 'threads.fid as _cid, '
             + prefix + 'posts.subject as _title, '
             + prefix + 'posts.message as _content, '
             + prefix + 'posts.username as _guest, '
             + prefix + 'posts.ipaddress as _ip, '
             + prefix + 'posts.dateline as _timestamp, '
             + prefix + 'threads.views as _viewcount, '
-            + prefix + '!threads.closed as _open, '
+            + prefix + 'threads.closed!="" as _open, '
             + prefix + 'threads.deletedposts as _deleted, '
             + prefix + 'threads.sticky as _pinned '
             + 'FROM ' + prefix + 'threads '
-            + 'JOIN ' + prefix + 'posts ON ' + prefix + 'thread.firstpost=' + prefix + 'posts.pid '
+            + 'JOIN ' + prefix + 'posts ON ' + prefix + 'threads.firstpost=' + prefix + 'posts.pid '
             + (start >= 0 && limit >= 0 ? 'LIMIT ' + start + ',' + limit : '');
 
 
@@ -263,7 +261,9 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
             + prefix + 'posts.ipaddress as _ip, '
             + prefix + 'posts.message as _content, '
             + prefix + 'posts.dateline as _timestamp '
-            + 'FROM ' + prefix + 'posts WHERE ' + prefix + 'posts.parentid<>0 '
+            + 'FROM ' + prefix + 'posts '
+	    + 'JOIN ' + prefix + 'threads ON ' + prefix + 'posts.tid='+ prefix + 'threads.tid'
+	    + ' WHERE ' + prefix + 'posts.pid!=' + prefix + 'threads.firstpost '
             + (start >= 0 && limit >= 0 ? 'LIMIT ' + start + ',' + limit : '');
 
         if (!Exporter.connection) {
