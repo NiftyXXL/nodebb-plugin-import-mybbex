@@ -163,6 +163,7 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
             + prefix + 'forums.disporder as _order, '
             + 'substring_index(substring_index(concat(\',\','+ prefix +'forums.parentlist),\',\',-2),\',\',1) as _parentCid '
             + 'FROM ' + prefix + 'forums ' // filter added later
+            + 'ORDER BY ' + prefix + 'forums.parentlist '
             + (start >= 0 && limit >= 0 ? 'LIMIT ' + start + ',' + limit : '');
 
         if (!Exporter.connection) {
