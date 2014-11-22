@@ -181,11 +181,12 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
 
                 //normalize here
                 var map = {};
+                var iIndex=0;
                 rows.forEach(function(row) {
                     row._name = row._name || 'Untitled Category '
                     row._description = row._description || 'No decsciption available';
                     row._timestamp = ((row._timestamp || 0) * 1000) || startms;
-                    map[row._cid] = row;
+                    map[iIndex++] = row;    // cant use cid as it will change the order of the Category in the List
                 });
 
                 callback(null, map);
