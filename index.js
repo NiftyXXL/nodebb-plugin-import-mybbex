@@ -106,7 +106,9 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
             + prefix + 'users.reputation as _reputation, '
             + prefix + 'users.birthday as _birthday '
             + prefix + 'users.avatar as _picture '
+            + prefix + 'usergroups.isbannedgroup as _banned'
             + 'FROM ' + prefix + 'users '
+            + 'JOIN ' + prefix + 'usergroups ON ' + prefix +'users.usergroup=' + prefix +'usergroups.gid '
             + (start >= 0 && limit >= 0 ? 'LIMIT ' + start + ',' + limit : '');
 
         if (!Exporter.connection) {
