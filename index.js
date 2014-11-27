@@ -98,12 +98,14 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
             + prefix + 'users.uid as _uid, '
             + prefix + 'users.email as _email, '
             + prefix + 'users.username as _username, '
+            + prefix + 'users.username as _fullname'
             + prefix + 'users.signature as _signature, '
             + prefix + 'users.regdate as _joindate, '
             + prefix + 'users.avatar as _pictureFilename, '
             + prefix + 'users.website as _website, '
             + prefix + 'users.reputation as _reputation, '
             + prefix + 'users.birthday as _birthday '
+            + prefix + 'users.avatar as _picture '
             + 'FROM ' + prefix + 'users '
             + (start >= 0 && limit >= 0 ? 'LIMIT ' + start + ',' + limit : '');
 
