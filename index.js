@@ -8,10 +8,6 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
 (function(Exporter) {
 
     Exporter.setup = function(config, callback) {
-        Exporter.log('setup');
-
-        // mysql db only config
-        // extract them from the configs passed by the nodebb-plugin-import adapter
         var _config = {
             host: config.dbhost || config.host || 'localhost',
             user: config.dbuser || config.user || 'user',
@@ -29,15 +25,21 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
         callback(null, Exporter.config());
     };
 
-    var getGroups = function(config, callback) {
-        if (_.isFunction(config)) {
-            callback = config;
-            config = {};
-        }
-        callback = !_.isFunction(callback) ? noop : callback;
+    Exporter.query = function(query, callback) {
+
         if (!Exporter.connection) {
-            Exporter.setup(config);
+            var err = {error: 'MySQL connection is not setup. Run setup(config) first'};
+            Exporter.error(err.error);
+            return callback(err);
         }
+
+        console.log(query);
+        Exporter.connection.query(query, callback);
+    };
+
+    var getGroups = function(callback) {
+        callback = !_.isFunction(callback) ? noop : callback;
+
         var prefix = Exporter.config('prefix');
         var query = 'SELECT '
             + prefix + 'usergroups.gid as _gid, '
@@ -45,7 +47,8 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
             + prefix + 'usergroups.canusepms as _pmpermissions, ' // not sure, just making an assumption
             + prefix + 'usergroups.issupermod as _adminpermissions ' // not sure, just making an assumption
             + ' from ' + prefix + 'usergroups ';
-        Exporter.connection.query(query,
+
+        Exporter.query(query,
             function(err, rows) {
                 if (err) {
                     Exporter.error(err);
@@ -90,7 +93,6 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
     Exporter.getPaginatedUsers = function(start, limit, callback) {
         callback = !_.isFunction(callback) ? noop : callback;
 
-        var err;
         var prefix = Exporter.config('prefix') || '';
         var startms = +new Date();
 
@@ -98,27 +100,21 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
             + prefix + 'users.uid as _uid, '
             + prefix + 'users.email as _email, '
             + prefix + 'users.username as _username, '
-            + prefix + 'users.username as _fullname'
+            + prefix + 'users.username as _fullname, '
             + prefix + 'users.signature as _signature, '
             + prefix + 'users.regdate as _joindate, '
             + prefix + 'users.avatar as _pictureFilename, '
             + prefix + 'users.website as _website, '
             + prefix + 'users.reputation as _reputation, '
-            + prefix + 'users.birthday as _birthday '
-            + prefix + 'users.avatar as _picture '
-            + prefix + 'usergroups.isbannedgroup as _banned'
+            + prefix + 'users.birthday as _birthday, '
+            + prefix + 'users.avatar as _picture, '
+            + prefix + 'usergroups.isbannedgroup as _banned '
             + 'FROM ' + prefix + 'users '
             + 'JOIN ' + prefix + 'usergroups ON ' + prefix +'users.usergroup=' + prefix +'usergroups.gid '
             + (start >= 0 && limit >= 0 ? 'LIMIT ' + start + ',' + limit : '');
 
-        if (!Exporter.connection) {
-            err = {error: 'MySQL connection is not setup. Run setup(config) first'};
-            Exporter.error(err.error);
-            return callback(err);
-        }
-
         getGroups(function(err, groups) {
-            Exporter.connection.query(query,
+            Exporter.query(query,
                 function(err, rows) {
                     if (err) {
                         Exporter.error(err);
@@ -134,7 +130,7 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
 
                         // from unix timestamp (s) to JS timestamp (ms)
                         row._joindate = ((row._joindate || 0) * 1000) || startms;
-                        
+
                         // lower case the email for consistency
                         row._email = (row._email || '').toLowerCase();
                         row._website = Exporter.validateUrl(row._website);
@@ -156,7 +152,6 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
     Exporter.getPaginatedCategories = function(start, limit, callback) {
         callback = !_.isFunction(callback) ? noop : callback;
 
-        var err;
         var prefix = Exporter.config('prefix');
         var startms = +new Date();
 
@@ -170,29 +165,21 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
             + 'ORDER BY ' + prefix + 'forums.parentlist '
             + (start >= 0 && limit >= 0 ? 'LIMIT ' + start + ',' + limit : '');
 
-        if (!Exporter.connection) {
-            err = {error: 'MySQL connection is not setup. Run setup(config) first'};
-            Exporter.error(err.error);
-            return callback(err);
-        }
-
-        Exporter.connection.query(query,
+        Exporter.query(query,
             function(err, rows) {
                 if (err) {
                     Exporter.error(err);
                     return callback(err);
                 }
-
                 //normalize here
                 var map = {};
-                var iIndex=0;
                 rows.forEach(function(row) {
-                    row._name = row._name || 'Untitled Category '
+                    row._name = row._name || 'Untitled Category';
                     row._description = row._description || 'No decsciption available';
                     row._timestamp = ((row._timestamp || 0) * 1000) || startms;
-                    map[iIndex++] = row;    // cant use cid as it will change the order of the Category in the List
-                });
 
+                    map[row._cid] = row; // MUST USE category ID here!!! if the order is wrong fix it manually in NodeBB Admin panel, it takes a minute
+                });
                 callback(null, map);
             });
     };
@@ -203,9 +190,9 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
     Exporter.getPaginatedTopics = function(start, limit, callback) {
         callback = !_.isFunction(callback) ? noop : callback;
 
-        var err;
         var prefix = Exporter.config('prefix');
         var startms = +new Date();
+
         var query = 'SELECT '
             + prefix + 'threads.tid as _tid, '
             + prefix + 'posts.uid as _uid, '
@@ -213,7 +200,7 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
             + prefix + 'posts.subject as _title, '
             + prefix + 'posts.message as _content, '
             + prefix + 'posts.username as _guest, '
-            + prefix + 'posts.ipaddress as _ip, '
+            // + prefix + 'posts.ipaddress as _ip, '// needs proper conversion from varbinary to char, see http://stackoverflow.com/a/1385701/493756
             + prefix + 'posts.dateline as _timestamp, '
             + prefix + 'threads.views as _viewcount, '
             + prefix + 'threads.closed!="" as _open, '
@@ -223,14 +210,7 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
             + 'JOIN ' + prefix + 'posts ON ' + prefix + 'threads.firstpost=' + prefix + 'posts.pid '
             + (start >= 0 && limit >= 0 ? 'LIMIT ' + start + ',' + limit : '');
 
-
-        if (!Exporter.connection) {
-            err = {error: 'MySQL connection is not setup. Run setup(config) first'};
-            Exporter.error(err.error);
-            return callback(err);
-        }
-
-        Exporter.connection.query(query,
+        Exporter.query(query,
             function(err, rows) {
                 if (err) {
                     Exporter.error(err);
@@ -243,7 +223,6 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
                     row._title = row._title ? row._title[0].toUpperCase() + row._title.substr(1) : 'Untitled';
                     row._timestamp = ((row._timestamp || 0) * 1000) || startms;
                     row._locked = row._open ? 0 : 1;
-                    
                     map[row._tid] = row;
                 });
 
@@ -257,7 +236,6 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
     Exporter.getPaginatedPosts = function(start, limit, callback) {
         callback = !_.isFunction(callback) ? noop : callback;
 
-        var err;
         var prefix = Exporter.config('prefix');
         var startms = +new Date();
         var query = 'SELECT '
@@ -269,17 +247,11 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
             + prefix + 'posts.message as _content, '
             + prefix + 'posts.dateline as _timestamp '
             + 'FROM ' + prefix + 'posts '
-	    + 'JOIN ' + prefix + 'threads ON ' + prefix + 'posts.tid='+ prefix + 'threads.tid'
-	    + ' WHERE ' + prefix + 'posts.pid!=' + prefix + 'threads.firstpost '
+            + 'JOIN ' + prefix + 'threads ON ' + prefix + 'posts.tid='+ prefix + 'threads.tid'
+            + ' WHERE ' + prefix + 'posts.pid!=' + prefix + 'threads.firstpost '
             + (start >= 0 && limit >= 0 ? 'LIMIT ' + start + ',' + limit : '');
 
-        if (!Exporter.connection) {
-            err = {error: 'MySQL connection is not setup. Run setup(config) first'};
-            Exporter.error(err.error);
-            return callback(err);
-        }
-
-        Exporter.connection.query(query,
+        Exporter.query(query,
             function(err, rows) {
                 if (err) {
                     Exporter.error(err);
