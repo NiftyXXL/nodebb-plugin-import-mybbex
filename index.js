@@ -172,13 +172,13 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
                     return callback(err);
                 }
                 //normalize here
-                var map = {};
+                var map = [],index=0;
                 rows.forEach(function(row) {
                     row._name = row._name || 'Untitled Category';
                     row._description = row._description || 'No decsciption available';
                     row._timestamp = ((row._timestamp || 0) * 1000) || startms;
 
-                    map[row._cid] = row; // MUST USE category ID here!!! if the order is wrong fix it manually in NodeBB Admin panel, it takes a minute
+                    map[index++] = row; // Keeping the order is importend. Parents need to be before there childs.
                 });
                 callback(null, map);
             });
