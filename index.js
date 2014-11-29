@@ -203,7 +203,7 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
             // + prefix + 'posts.ipaddress as _ip, '// needs proper conversion from varbinary to char, see http://stackoverflow.com/a/1385701/493756
             + prefix + 'posts.dateline as _timestamp, '
             + prefix + 'threads.views as _viewcount, '
-            + prefix + 'threads.closed!="" as _open, '
+            + prefix + 'threads.closed!="" as _locked, '
             + prefix + 'threads.deletedposts as _deleted, '
             + prefix + 'threads.sticky as _pinned '
             + 'FROM ' + prefix + 'threads '
@@ -222,7 +222,6 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
                 rows.forEach(function(row) {
                     row._title = row._title ? row._title[0].toUpperCase() + row._title.substr(1) : 'Untitled';
                     row._timestamp = ((row._timestamp || 0) * 1000) || startms;
-                    row._locked = row._open ? 0 : 1;
                     map[row._tid] = row;
                 });
 
