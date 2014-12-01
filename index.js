@@ -204,7 +204,7 @@ var logPrefix = '[nodebb-plugin-import-mybbex]';
             + prefix + 'posts.dateline as _timestamp, '
             + prefix + 'threads.views as _viewcount, '
             + prefix + 'threads.closed!="" as _locked, '
-            + prefix + 'threads.deletedposts as _deleted, '
+//            + prefix + 'threads.deletedposts as _deleted, ' Not supported by Mybb16 ( start at mybb18)
             + prefix + 'threads.sticky as _pinned '
             + 'FROM ' + prefix + 'threads '
             + 'JOIN ' + prefix + 'posts ON ' + prefix + 'threads.firstpost=' + prefix + 'posts.pid '
